@@ -17,12 +17,14 @@ const semesterButtons = document.querySelectorAll('.semester');
 const previousButton = document.querySelector('#prevSemester')
 const nextButton = document.querySelector('#nextSemester')
 const semesterContainer = document.querySelector('.semester-container ')
-const graphContainer = document.querySelector('.cal-graph')
+const graphContainer = document.querySelector('.graph-container')
 const viewGraphButton = document.querySelector('#cal-graph')
 const cgpaDisplay = document.querySelector('.cgpa')
 const CGPAtext = document.querySelector('.CGPA')
 const unitstext = document.querySelector('.unit-text')
 const allInputs = document.querySelectorAll('input');
+const deleteButtons = document.querySelectorAll('.delete');
+
 
 
 //Toggling Dark Mode
@@ -51,16 +53,18 @@ btnToggle.addEventListener('click', function () {
 
 
 
-  // Semester buttons
+  
   semesterButtons.forEach(button => {
     button.classList.toggle('text-white');
   });
 
-  previousButton.classList.toggle('bg-gray-900');
-  nextButton.classList.toggle('bg-gray-900');
+ previousButton.classList.add('bg-black-800');
+ previousButton.classList.toggle('text-white');
 
+ nextButton.classList.toggle('bg-gray-800');
+ nextButton.classList.toggle('text-black-900');
 
-  // ✅ INPUT FIX (THIS IS THE IMPORTANT PART)
+  
   allInputs.forEach(input => {
     input.classList.toggle('text-white');
     input.classList.toggle('placeholder-gray-300');
@@ -173,6 +177,7 @@ addCourse.addEventListener('click', function (){
           </td>
           <td class="grade-input font-semibold text-blue-600">0</td>
           <td class="points-input font-semibold">0</td>
+           <td class="delete px-4 py-2 text-center">✕</td>
         </tr>
 
   
@@ -313,7 +318,7 @@ function switchSemester(semesterNumber) {
      for (let i= semesterPage;  i< semesterPage + semester_Per_Page; i++){
       const btn = document.createElement('button')
       btn.textContent= `Semester ${i}`
-      btn.className ='semester text-xl md:text-3xl text-gray-500 hover:border-gray-300 cursor-pointer transition-all duration-300'
+      btn.className ='semester  text-gray-500 hover:border-gray-300 cursor-pointer transition-all duration-300'
       btn.dataset.semester = i
      
 
@@ -352,9 +357,28 @@ function switchSemester(semesterNumber) {
    })
 renderData()
 //calclate CGPA display ony when semester is on 2 and above
+//
 
 
+//Delete 
+tbody.addEventListener('click', function(e){
+   if (e.target.classList.contains('delete')){
+      const row = e.target.closest('tr')
 
+      row.remove();
+      renumberRows();
+      totalUnits()
+      calculateGPA();
+      calculateCGPA();
+   }
+})
+
+//Renumber rows
+function renumberRows(){
+   tbody.querySelectorAll('tr').forEach((row, index)=>{
+      row.children[0].textContent = index + 1;
+   })
+}
 
 function calculateGPA(){
  let totalPoints= Array.from(tbody.querySelectorAll('.points-input'))
@@ -434,6 +458,8 @@ function loadSemesterData(currentData){
    calculateCGPA()
 }
 
+
+
 //Load Semester Data when clicked
 document.addEventListener('click', function(e){
    if (e.target.classList.contains('semester')){
@@ -445,6 +471,7 @@ document.addEventListener('click', function(e){
 let gpaChart = null;
 
 viewGraphButton.addEventListener('click', function(){
+   console.log("Omo ope")
    graphContainer.classList.toggle('hidden');
 
    if (!graphContainer.classList.contains("hidden")){
@@ -453,6 +480,8 @@ viewGraphButton.addEventListener('click', function(){
 
 })
 //renderGPAChart
+
+
 
 function renderGPAChart(){
    const ctx = document.getElementById('gpaChart').getContext('2d');
@@ -476,6 +505,36 @@ function renderGPAChart(){
    });
 }
 
+
+
+// Handle user input in tbody
+tbody.addEventListener("input", function(e) {
+  const target = e.target;
+
+  // Only respond to score or units inputs
+  if (target.classList.contains('score-input') || target.classList.contains('units-input')) {
+    const row = target.closest('tr');
+
+    // Update grade and points for this row if score changed
+    if (target.classList.contains('score-input')) {
+      userInput(target);
+    }
+
+    // Recalculate totals
+    totalUnits();
+    calculateGPA();
+    calculateCGPA();
+
+    // Update chart only if visible
+    if (!graphContainer.classList.contains('hidden')) {
+      if (gpaChart) {
+        gpaChart.destroy();
+        gpaChart = null;
+      }
+      renderGPAChart();
+    }
+  }
+});
 
 
 //Create Chart using Chart.js
